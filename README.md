@@ -1,3 +1,5 @@
+<img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/Nix1983/FixedFloatApi.NetCore/CI">   <img alt="Nuget" src="https://img.shields.io/nuget/v/FixedFloatApi">   <img alt="GitHub" src="https://img.shields.io/github/license/Nix1983/FixedFloatApi.NetCore">
+
 # FixedFloatApi.NetCore 
 
 .Net Core library for accessing the [FixedFloat Api](https://fixedfloat.com/api) for C#/NET.
