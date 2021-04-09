@@ -39,7 +39,7 @@ namespace FixedFloatApi.Dto.Requests
 
             if (Choice == Emergency.REFUND && string.IsNullOrEmpty(Address))
             {
-                throw new Exception("Address must be set when Choice is REFUND");
+                throw new Exception("Address must be set when choice is REFUND");
             }
 
         }   

@@ -2,14 +2,16 @@
 using FixedFloatApi.Consts;
 using FixedFloatApi.Dto;
 using FixedFloatApi.Dto.Requests;
+using FixedFloatApi.Dto.Response;
 using FixedFloatApi.Enums;
 using NUnit.Framework;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace UnitTests
 {
 
-    /// -----------------Important--------------------------------------------------------------
+    /// ------------------------------------Important-------------------------------------------
     /// The limit per minute is 250 units of weight.
     /// A createOrder request costs 50 units of weight.All other requests by 1 unit of weight
     /// If you have more than 250 per min your API KEY will blocked
@@ -18,7 +20,7 @@ namespace UnitTests
     public class ClientTests
     {
         private static Authentication _auth;
-        private const string ApiKey = "Your API KEY";
+        private const string ApiKey = "Your API Key";
         private const string Secret = "Your Secret";
         private static FixedFloatClient _client;
 
@@ -39,15 +41,6 @@ namespace UnitTests
         }
 
         [Test]
-        public void GetCurrenciesTests()
-        {
-            var rs = _client.GetCurrencies();
-            Assert.True(rs.StatusCode == 0);
-            Assert.True(rs.Msg.Equals(Messages.OK));
-            Assert.True(rs.Currencies.Count > 0);
-        }
-
-        [Test]
         [TestCase(ApiKey, "WrongSecret")]
         [TestCase("WrongApiKey", Secret)]
         public void NoPermissionTest(string apiKey, string secret)
@@ -61,18 +54,36 @@ namespace UnitTests
         }
 
         [Test]
+        public void GetCurrenciesTests()
+        {
+            CurrenciesTestsAsserts(_client.GetCurrencies());
+        }
+
+        [Test]
+        public async Task GetCurrenciesAsyncTests()
+        {
+            var rs = await _client.GetCurrenciesAsync();
+            CurrenciesTestsAsserts(rs);
+        }
+
+        [Test]
         [TestCase("BTC", "ETH", 1)]
         [TestCase("LTC", "DOGE", 0.152)]
-        [TestCase("eth", "DasH", 4)]
-        [TestCase("eth", "DasH", -5)]
-        [TestCase("eth", "DasH", 0)]
         public void GetPairTest(string from, string to, decimal amount)
         {
             var pair = new PairRequest(from, to, amount);
             var rs = _client.GetPair(pair);
-            Assert.True(rs.StatusCode == 0);
-            Assert.True(rs.Msg.Equals(Messages.OK));
-            Assert.NotNull(rs.Data);
+            PairTestsAsserts(rs);
+        }
+
+        [Test]
+        [TestCase("BTC", "ETH", 1)]
+        [TestCase("LTC", "DOGE", 0.152)]
+        public async Task GetPairAsyncTest(string from, string to, decimal amount)
+        {
+            var pair = new PairRequest(from, to, amount);
+            var rs = await _client.GetPairAsync(pair);
+            PairTestsAsserts(rs);
         }
 
         [Test]
@@ -90,40 +101,49 @@ namespace UnitTests
         [Test]
         [TestCase("ltc", "Doge", 0.153, ExchangeType.Fixed, 1000)]
         [TestCase("ltc", "Doge", 1.153, ExchangeType.Float, 13)]
-        [TestCase("btc", "ETH", 0.153, ExchangeType.Fixed, 0)]
-        [TestCase("daSH", "ETH", 1.1231, ExchangeType.Float, 0)]
         public void GetPriceTest(string fromCurrency, string toCurrency, decimal fromQty, ExchangeType type, decimal toQty)
         {
             var price = new PriceRequest(fromCurrency, toCurrency, fromQty, type, toQty);
+            PriceTestsAsserts(_client.GetPrice(price));
+        }
 
-            var rs = _client.GetPrice(price);
-            Assert.True(rs.StatusCode == 0);
-            Assert.True(rs.Msg.Equals(Messages.OK));
-            Assert.NotNull(rs.Data.To);
-            Assert.NotNull(rs.Data.From);
+        [Test]
+        [TestCase("ltc", "Doge", 0.153, ExchangeType.Fixed, 1000)]
+        [TestCase("ltc", "Doge", 1.153, ExchangeType.Float, 13)]
+        public async Task GetPriceAsyncTest(string fromCurrency, string toCurrency, decimal fromQty, ExchangeType type, decimal toQty)
+        {
+            var price = new PriceRequest(fromCurrency, toCurrency, fromQty, type, toQty);
+            var rs = await _client.GetPriceAsync(price);
+            PriceTestsAsserts(rs);
         }
 
         [Test]
         [Description("Read important information on the top of the class")]
-        [TestCase("ltc", "doge", 0.152, "DCcbT48AXJiHWsgfRrMigZDxdyEHh95H48", ExchangeType.Fixed, "Extra not work", 9)]
-        [TestCase("doge", "ltc", 540, "MNFzK7SAXiRTzvQwjynsAioKectM42jev6", ExchangeType.Float, "Extra not work", 0)]
+        [TestCase("ltc", "doge", 0.5, "DCcbT48AXJiHWsgfRrMigZDxdyEHh95H48", ExchangeType.Float, "Extra not work", 9)]
         public void CreateOrderTests(string fromCurrency, string toCurrency, decimal fromQty, string toAddress, ExchangeType type, string extra, decimal toQty)
         {
             var order = new CreateOrderRequest(fromCurrency, toCurrency, fromQty, toAddress, type, extra, toQty);
 
             var rs = _client.CreateOrder(order);
-            Assert.True(rs.StatusCode == 0);
-            Assert.True(rs.Msg.Equals(Messages.OK));
-            Assert.NotNull(rs.Data);
-            Assert.NotNull(rs.Data.From);
-            Assert.NotNull(rs.Data.To);
             Assert.AreEqual(rs.Data.To.Address, toAddress);
             Assert.AreEqual(rs.Data.To.Currency, toCurrency.ToUpper());
             Assert.AreEqual(rs.Data.From.Currency, fromCurrency.ToUpper());
-            Assert.False(string.IsNullOrEmpty(rs.Data.To.Address));
-            Assert.False(string.IsNullOrEmpty(rs.Data.Token));
-            Assert.False(string.IsNullOrEmpty(rs.Data.Id));
+            CreateOrderTestsAsserts(rs);
 
+        }
+
+        [Test]
+        [Description("Read important information on the top of the class")]
+        [TestCase("ltc", "doge", 0.152, "DCcbT48AXJiHWsgfRrMigZDxdyEHh95H48", ExchangeType.Fixed, "Extra not work", 9)]
+        public async Task CreateOrderAsyncTests(string fromCurrency, string toCurrency, decimal fromQty, string toAddress, ExchangeType type, string extra, decimal toQty)
+        {
+            var order = new CreateOrderRequest(fromCurrency, toCurrency, fromQty, toAddress, type, extra, toQty);
+
+            var rs = await _client.CreateOrderAsync(order);
+            Assert.AreEqual(rs.Data.To.Address, toAddress);
+            Assert.AreEqual(rs.Data.To.Currency, toCurrency.ToUpper());
+            Assert.AreEqual(rs.Data.From.Currency, fromCurrency.ToUpper());
+            CreateOrderTestsAsserts(rs);
         }
 
         [Test]
@@ -138,28 +158,36 @@ namespace UnitTests
         }
 
         [Test]
-        [Ignore("Without valid id and token, test will fail")]
         public void SetEmergencyTest()
         {
             var em = new EmergencyRequest("Your Valid Id", "Your Valid token");
             var rs = _client.SetEmergency(em);
-            Assert.IsTrue(rs.IsSuccessfullySet);
-            Assert.AreEqual(rs.Msg, Messages.OK);
-            Assert.AreEqual(rs.StatusCode, 0);
+            EmergencyTestsAsserts(rs);
+        }
+
+        [Test]
+        public async Task SetEmergencyAsyncTest()
+        {
+            var em = new EmergencyRequest("Your Valid Id", "Your Valid token");
+            var rs = await _client.SetEmergencyAsync(em);
+            EmergencyTestsAsserts(rs);
+        }
+
+        [Test]
+        public void GetOrderTests()
+        {
+            var order = new GetOrderRequest("Your Valid Id", "Your Valid token");
+            var rs = _client.GetOrder(order);
+            GetOrderTestsAsserts(rs);
 
         }
 
         [Test]
-        //[Ignore("Without valid id and token, test will fail")]
-        public void GetOrderTests()
+        public async Task GetOrderAsyncTests()
         {
-            var order = new GetOrderRequest("EG598W", "ksQsUMY7KLeyXrEXkz58R1RKtiLA49ScRxBx7Fh5");
-            var rs = _client.GetOrder(order);
-            Assert.True(rs.StatusCode == 0);
-            Assert.True(rs.Msg.Equals(Messages.OK));
-            Assert.NotNull(rs.Data);
-            Assert.NotNull(rs.Data.From);
-            Assert.NotNull(rs.Data.To);
+            var order = new GetOrderRequest("Your Valid Id", "Your Valid token");
+            var rs = await _client.GetOrderAsync(order);
+            GetOrderTestsAsserts(rs);
 
         }
 
@@ -173,5 +201,64 @@ namespace UnitTests
             Assert.AreEqual(rs.StatusCode, 501);
 
         }
+
+
+        #region //---- private functions ---
+
+        private void CurrenciesTestsAsserts(CurrencyResponse rs)
+        {
+            Assert.True(rs.StatusCode == 0);
+            Assert.True(rs.Msg.Equals(Messages.OK));
+            Assert.True(rs.Currencies.Count > 0);
+        }
+
+        private void PairTestsAsserts(PairResponse rs)
+        {
+            Assert.True(rs.StatusCode == 0);
+            Assert.True(rs.Msg.Equals(Messages.OK));
+            Assert.NotNull(rs.Data);
+        }
+
+        private void PriceTestsAsserts(PriceResponse rs)
+        {
+            Assert.True(rs.StatusCode == 0);
+            Assert.True(rs.Msg.Equals(Messages.OK));
+            Assert.NotNull(rs.Data.To);
+            Assert.NotNull(rs.Data.From);
+        }
+
+        private void CreateOrderTestsAsserts(CreateOrderResponse rs)
+        {
+
+            Assert.True(rs.StatusCode == 0);
+            Assert.True(rs.Msg.Equals(Messages.OK));
+            Assert.NotNull(rs.Data);
+            Assert.NotNull(rs.Data.From);
+            Assert.NotNull(rs.Data.To);
+            Assert.False(string.IsNullOrEmpty(rs.Data.To.Address));
+            Assert.False(string.IsNullOrEmpty(rs.Data.Token));
+            Assert.False(string.IsNullOrEmpty(rs.Data.Id));
+
+        }
+
+        private void EmergencyTestsAsserts(EmergencyResponse rs)
+        {
+            Assert.IsTrue(rs.IsSuccessfullySet);
+            Assert.AreEqual(rs.Msg, Messages.OK);
+            Assert.AreEqual(rs.StatusCode, 0);
+        }
+
+        private void GetOrderTestsAsserts(GetOrderResponse rs)
+        {
+            Assert.True(rs.StatusCode == 0);
+            Assert.True(rs.Msg.Equals(Messages.OK));
+            Assert.NotNull(rs.Data);
+            Assert.NotNull(rs.Data.From);
+            Assert.NotNull(rs.Data.To);
+        }
+    
     }
+
+    #endregion
 }
+

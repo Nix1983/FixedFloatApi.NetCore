@@ -1,12 +1,32 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Nix</Authors>
+    <Description>A .NET implementation for the FixedFloat API for swapping coins. The FixedFloat API is a way to simple swap crypto coins fast and cheap</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>bitcoin, ethereum, litecoin, coinbase, api, cryptocurrency, payment, money, merchant, checkout, cart, gateway, bank, swap</PackageTags>
+    <PackageIcon>Logo.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/Nix1983/FixedFloatApi.NetCore</PackageProjectUrl>
+    <RepositoryType>https://github.com/Nix1983/FixedFloatApi.NetCore</RepositoryType>
+    <PackageReleaseNotes>First stable Version</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="RestSharp" Version="106.11.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Logo\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Logo\Logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

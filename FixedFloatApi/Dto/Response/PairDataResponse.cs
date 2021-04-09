@@ -23,7 +23,7 @@ namespace FixedFloatApi.Dto.Response
         public decimal Rate { get; set; }
 
         /// <summary>
-        /// amount
+        /// amount what you get 
         /// </summary>
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
